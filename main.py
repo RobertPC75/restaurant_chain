@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI, HTTPException
 from mysql.connector import connect, Error
 from typing import List
@@ -6,6 +7,14 @@ from orders import OrderManager, OrderInfo, OrderItem
 from client import Client
 
 app = FastAPI()
+
+# Get the port from the environment variable or use a default value (e.g., 8000)
+port = int(os.environ.get("PORT", 8000))
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=port, reload=True)
 
 # Configuración de la conexión a la base de datos
 db_config = {
