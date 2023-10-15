@@ -70,7 +70,7 @@ def remove_item_from_order(order_id: int, detail_id: int):
     return order_manager.remove_item_from_order(db_config, order_id, detail_id)
 
 # Obtener todos los clientes
-@app.get("/clients", response_model=list[Client])
+@app.get("/clients", response_model=List[Client])
 def get_all_clients():
     return Client.get_all_clients(db_config)
 
