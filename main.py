@@ -1,99 +1,110 @@
 import os
-from fastapi import FastAPI, HTTPException
-from mysql.connector import connect, Error
+from fastapi import FastAPI, HTTPException, Depends
+from psycopg2 import connect, sql
+from psycopg2.extras import RealDictCursor
 from typing import List
-from menu import Menu, MenuItem
+from fastapi.responses import JSONResponse
+from menu import MenuManager, MenuItem
 from orders import OrderManager, OrderInfo, OrderItem
-from client import Client
+from client import ClientManager, ClientItem
 
 app = FastAPI()
 
-# Get the port from the environment variable or use a default value (e.g., 8000)
-port = int(os.environ.get("PORT", 8000))
+# Datos de conexión a la base de datos
+DATABASE_URL = "postgres://restaurant_chain_db_user:BbXEd4RhkuzaQt7K2dmW38LIZ8mOF34y@dpg-ckm6i4iv7m0s73fkuo20-a.oregon-postgres.render.com/restaurant_chain_db"
 
-if __name__ == "__main__":
-    import uvicorn
+def get_db_connection():
+    conn = connect(DATABASE_URL)
+    return conn
 
-    uvicorn.run(app, host="0.0.0.0", port=port, reload=True)
-
-# Configuración de la conexión a la base de datos
-db_config = {
-    'host': '127.0.0.1',  
-    'user': 'root',     
-    'password': 'Law61972961!',  
-    'database': 'restaurant_chain'  
-}
-
-@app.get("/menu/all_info")
+@app.get("/menu/all_info", response_model=List[MenuItem])
 def read_all_menu_info():
-    return Menu.get_all_menu_info(db_config)
+    with get_db_connection() as conn:
+        return MenuManager.get_all_menu_info(conn)
 
-@app.get("/menu/{item_id}")
+@app.get("/menu/{item_id}", response_model=MenuItem)
 def read_menu_item(item_id: int):
-    return Menu.get_menu_item(db_config, item_id)
+    with get_db_connection() as conn:
+        return MenuManager.get_menu_item(conn, item_id)
 
-@app.post("/menu")
+@app.post("/menu", response_model=MenuItem)
 def add_menu_item(nombre: str, precio: float):
-    return Menu.add_menu_item(db_config, nombre, precio)
+    with get_db_connection() as conn:
+        return MenuManager.add_menu_item(conn, nombre, precio)
 
-@app.put("/menu/{item_id}")
+@app.put("/menu/{item_id}", response_model=MenuItem)
 def update_menu_item(item_id: int, nombre: str, precio: float):
-    return Menu.update_menu_item(db_config, item_id, nombre, precio)
+    with get_db_connection() as conn:
+        return MenuManager.update_menu_item(conn, item_id, nombre, precio)
 
-@app.delete("/menu/{item_id}")
+@app.delete("/menu/{item_id}", response_model=MenuItem)
 def delete_menu_item(item_id: int):
-    return Menu.delete_menu_item(db_config, item_id)
+    with get_db_connection() as conn:
+        return MenuManager.delete_menu_item(conn, item_id)
 
 order_manager = OrderManager()
 
 @app.get("/orders/all_info", response_model=List[OrderInfo])
 def read_all_order_info():
-    return order_manager.get_all_order_info(db_config)
+    with get_db_connection() as conn:
+        return order_manager.get_all_order_info(conn)
 
+# Resto de las rutas para orders...
 @app.get("/orders/{order_id}/details", response_model=List[OrderItem])
 def read_order_details(order_id: int):
-    return order_manager.get_order_details(db_config, order_id)
+    with get_db_connection() as conn:
+        return order_manager.get_order_details(conn, order_id)
 
 @app.get("/orders/{order_id}/total_price")
 def read_order_total_price(order_id: int):
-    return order_manager.read_order_total_price(db_config, order_id)
+    with get_db_connection() as conn:
+        return order_manager.read_order_total_price(conn, order_id)
 
 @app.post("/orders/add")
 def add_order(customer_id: int):
-    return order_manager.add_order(db_config, customer_id)
+    with get_db_connection() as conn:
+        return order_manager.add_order(conn, customer_id)
 
 @app.put("/orders/{order_id}/change_status")
 def change_order_status(order_id: int):
-    return order_manager.change_order_status(db_config, order_id)
+    with get_db_connection() as conn:
+        return order_manager.change_order_status(conn, order_id)
 
 @app.post("/orders/{order_id}/add_items")
 def add_items_to_order(order_id: int, item_id: int, quantity: int):
-    return order_manager.add_items_to_order(db_config, order_id, item_id, quantity)
+    with get_db_connection() as conn:
+        return order_manager.add_items_to_order(conn, order_id, item_id, quantity)
 
 @app.delete("/orders/{order_id}")
 def delete_order(order_id: int):
-    return order_manager.delete_order(db_config, order_id)
+    with get_db_connection() as conn:
+        return order_manager.delete_order(conn, order_id)
 
 @app.delete("/orders/{order_id}/remove_item/{detail_id}")
 def remove_item_from_order(order_id: int, detail_id: int):
-    return order_manager.remove_item_from_order(db_config, order_id, detail_id)
+    with get_db_connection() as conn:
+        return order_manager.remove_item_from_order(conn, order_id, detail_id)
 
-# Obtener todos los clientes
-@app.get("/clients", response_model=List[Client])
+client_manager = ClientManager()
+
+# Resto de las rutas para clients...
+@app.get("/clients", response_model=List[ClientItem])
 def get_all_clients():
-    return Client.get_all_clients(db_config)
+    with get_db_connection() as conn:
+        return client_manager.get_all_clients(conn)
 
-# Agregar nuevo cliente
-@app.post("/clients", response_model=Client)
+@app.post("/clients", response_model=ClientItem)
 def add_client(name: str, address: str, phone_number: str):
-    return Client.add_client(db_config, name, address, phone_number)
+    with get_db_connection() as conn:
+        return client_manager.add_client(conn, name, address, phone_number)
 
-# Editar cliente
-@app.put("/clients/{client_id}", response_model=Client)
+@app.put("/clients/{client_id}", response_model=ClientItem)
 def edit_client(client_id: int, name: str, address: str, phone_number: str):
-    return Client.edit_client(db_config, client_id, name, address, phone_number)
+    with get_db_connection() as conn:
+        return client_manager.edit_client(conn, client_id, name, address, phone_number)
 
-# Eliminar cliente
-@app.delete("/clients/{client_id}", response_model=Client)
+@app.delete("/clients/{client_id}", response_model=ClientItem)
 def delete_client(client_id: int):
-    return Client.delete_client(db_config, client_id)
+    with get_db_connection() as conn:
+        return client_manager.delete_client(conn, client_id)
+

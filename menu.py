@@ -1,94 +1,82 @@
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from fastapi import HTTPException
-from mysql.connector import connect, Error
 from pydantic import BaseModel
-from typing import List
-
 
 class MenuItem(BaseModel):
     menu_id: int
     name: str
     price: float
 
-class Menu:
-    @staticmethod
-    def get_all_menu_info(db_config) -> List[MenuItem]:
-        try:
-            with connect(**db_config) as connection:
-                with connection.cursor() as cursor:
-                    query = "SELECT menu_id, name, price FROM Menu"
-                    cursor.execute(query)
-                    result = cursor.fetchall()
-                    menu_info = [MenuItem(menu_id=item[0], name=item[1], price=item[2]) for item in result]
-                    return menu_info
+class MessageResponse(BaseModel):
+    message: str
 
-        except Error as e:
-            print(f"Error: {e}")
+class MenuManager:
+    @staticmethod
+    def get_all_menu_info(db_connection):
+        try:
+            with db_connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("SELECT * FROM menu")
+                menu_items = cursor.fetchall()
+            return menu_items
+        except Exception as e:
+            print(f"Error in get_all_menu_info: {e}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
 
     @staticmethod
-    def get_menu_item(db_config, item_id: int) -> MenuItem:
+    def get_menu_item(db_connection, item_id: int):
         try:
-            with connect(**db_config) as connection:
-                with connection.cursor() as cursor:
-                    query = "SELECT * FROM Menu WHERE menu_id = %s"
-                    cursor.execute(query, (item_id,))
-                    result = cursor.fetchone()
+            with db_connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("SELECT * FROM menu WHERE menu_id = %s", (item_id,))
+                menu_item = cursor.fetchone()
 
-                    if result is None:
-                        raise HTTPException(status_code=404, detail="Item not found")
+            if not menu_item:
+                raise HTTPException(status_code=404, detail="Item not found")
 
-                    return MenuItem(menu_id=result[0], name=result[1], price=result[2])
-
-        except Error as e:
-            print(f"Error: {e}")
+            return menu_item
+        except Exception as e:
+            print(f"Error in get_menu_item: {e}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
 
     @staticmethod
-    def add_menu_item(db_config, nombre: str, precio: float) -> dict:
+    def add_menu_item(db_connection, nombre: str, precio: float):
         try:
-            with connect(**db_config) as connection:
-                with connection.cursor() as cursor:
-                    query = "INSERT INTO Menu (name, price) VALUES (%s, %s)"
-                    cursor.execute(query, (nombre, precio))
-                    connection.commit()
-                    return {"message": "Item added successfully", "item_id": cursor.lastrowid}
+            with db_connection.cursor() as cursor:
+                cursor.execute("INSERT INTO menu (name, price) VALUES (%s, %s) RETURNING menu_id", (nombre, precio))
+                new_menu_item_id = cursor.fetchone()[0]
+            db_connection.commit()
 
-        except Error as e:
-            print(f"Error: {e}")
+            return {"message": "Item added successfully", "item_id": new_menu_item_id}
+        except Exception as e:
+            print(f"Error in add_menu_item: {e}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
 
     @staticmethod
-    def update_menu_item(db_config, item_id: int, nombre: str, precio: float) -> dict:
+    def update_menu_item(db_connection, item_id: int, nombre: str, precio: float):
         try:
-            with connect(**db_config) as connection:
-                with connection.cursor() as cursor:
-                    query = "UPDATE Menu SET name = %s, price = %s WHERE menu_id = %s"
-                    cursor.execute(query, (nombre, precio, item_id))
-                    connection.commit()
+            with db_connection.cursor() as cursor:
+                cursor.execute("UPDATE menu SET name = %s, price = %s WHERE menu_id = %s", (nombre, precio, item_id))
+            db_connection.commit()
 
-                    if cursor.rowcount == 0:
-                        raise HTTPException(status_code=404, detail="Item not found")
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Item not found")
 
-                    return {"message": "Item updated successfully", "item_id": item_id}
-
-        except Error as e:
-            print(f"Error: {e}")
+            return MessageResponse(message="Item updated successfully")
+        except Exception as e:
+            print(f"Error in update_menu_item: {e}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
 
     @staticmethod
-    def delete_menu_item(db_config, item_id: int) -> dict:
+    def delete_menu_item(db_connection, item_id: int):
         try:
-            with connect(**db_config) as connection:
-                with connection.cursor() as cursor:
-                    query = "DELETE FROM Menu WHERE menu_id = %s"
-                    cursor.execute(query, (item_id,))
-                    connection.commit()
+            with db_connection.cursor() as cursor:
+                cursor.execute("DELETE FROM menu WHERE menu_id = %s", (item_id,))
+            db_connection.commit()
 
-                    if cursor.rowcount == 0:
-                        raise HTTPException(status_code=404, detail="Item not found")
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Item not found")
 
-                    return {"message": "Item deleted successfully"}
-                    
-        except Error as e:
-            print(f"Error: {e}")
+            return MessageResponse(message="Item deleted successfully")
+        except Exception as e:
+            print(f"Error in delete_menu_item: {e}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
