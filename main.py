@@ -11,7 +11,7 @@ from root_message import RootMessage
 
 app = FastAPI()
 
-# Datos de conexión a la base de datos
+# Datos de conexión a la base de datoss
 DATABASE_URL = "postgres://restaurant_chain_db_user:BbXEd4RhkuzaQt7K2dmW38LIZ8mOF34y@dpg-ckm6i4iv7m0s73fkuo20-a/restaurant_chain_db"
 
 def get_db_connection():
