@@ -15,21 +15,21 @@ class RootMessage:
                 <ul>
                     <li>/menu/all_info</li>
                     <li>/menu/{item_id}</li>
-                    <li>/menu</li>
-                    <li>/menu/{item_id}</li>
-                    <li>/menu/{item_id}</li>
+                    <li>/menu/add</li>
+                    <li>/menu/{item_id}/edit</li>
+                    <li>/menu/{item_id}/delete</li>
                     <li>/orders/all_info</li>
                     <li>/orders/{order_id}/details</li>
                     <li>/orders/{order_id}/total_price</li>
                     <li>/orders/add</li>
                     <li>/orders/{order_id}/change_status</li>
                     <li>/orders/{order_id}/add_items</li>
-                    <li>/orders/{order_id}</li>
+                    <li>/orders/{order_id}/delete</li>
                     <li>/orders/{order_id}/remove_item/{detail_id}</li>
-                    <li>/clients</li>
-                    <li>/clients</li>
-                    <li>/clients/{client_id}</li>
-                    <li>/clients/{client_id}</li>
+                    <li>/clients/all_info</li>
+                    <li>/clients/add</li>
+                    <li>/clients/{client_id}/edit</li>
+                    <li>/clients/{client_id}/delete</li>
                 </ul>
             </body>
         </html>
