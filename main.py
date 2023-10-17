@@ -3,10 +3,11 @@ from fastapi import FastAPI, HTTPException, Depends
 from psycopg2 import connect, sql
 from psycopg2.extras import RealDictCursor
 from typing import List
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from menu import MenuManager, MenuItem
 from orders import OrderManager, OrderInfo, OrderItem
 from client import ClientManager, ClientItem
+from root_message import RootMessage
 
 app = FastAPI()
 
@@ -16,6 +17,14 @@ DATABASE_URL = "postgres://restaurant_chain_db_user:BbXEd4RhkuzaQt7K2dmW38LIZ8mO
 def get_db_connection():
     conn = connect(DATABASE_URL)
     return conn
+
+
+app = FastAPI()
+
+@app.get("/", response_class=HTMLResponse)
+def read_root():
+    message = RootMessage.get_html_message()
+    return HTMLResponse(content=message)
 
 @app.get("/menu/all_info", response_model=List[MenuItem])
 def read_all_menu_info():
