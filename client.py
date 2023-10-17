@@ -10,7 +10,7 @@ class ClientItem(BaseModel):
     phone_number: str
 
 class DeletedClientResponse(BaseModel):
-    Id: int
+    id: int
     message: str = "Client deleted successfully"
 
 class ClientManager:
@@ -36,7 +36,7 @@ class ClientManager:
                 new_client_id = cursor.fetchone()["id"]
             db_connection.commit()
 
-            return ClientItem(ID=new_client_id, name=name, address=address, phone_number=phone_number)
+            return ClientItem(id=new_client_id, name=name, address=address, phone_number=phone_number)
         except psycopg2.Error as e:
             print(f"Error in add_client: {e}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -51,24 +51,24 @@ class ClientManager:
                 )
             db_connection.commit()
 
-            return ClientItem(ID=client_id, name=name, address=address, phone_number=phone_number)
+            return ClientItem(id=client_id, name=name, address=address, phone_number=phone_number)
         except psycopg2.Error as e:
             print(f"Error in edit_client: {e}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
-
+        
     @staticmethod
     def delete_client(db_connection, client_id: int):
         try:
-            with db_connection.cursor() as cursor:
-                cursor.execute("DELETE FROM client WHERE id = %s RETURNING *", (client_id,))
+            with db_connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("DELETE FROM client WHERE id = %s RETURNING id", (client_id,))
                 deleted_client = cursor.fetchone()
-            
+
             if not deleted_client:
                 raise HTTPException(status_code=404, detail="Client not found")
 
             db_connection.commit()
 
-            return DeletedClientResponse(ID=client_id)
+            return DeletedClientResponse(id=client_id)
         except psycopg2.Error as e:
             print(f"Error in delete_client: {e}")
             raise HTTPException(status_code=500, detail="Internal Server Error")

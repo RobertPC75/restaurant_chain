@@ -62,7 +62,7 @@ class OrderManager:
     def add_order(db_connection, customer_id: int):
         try:
             with db_connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM clients WHERE id = %s", (customer_id,))
+                cursor.execute("SELECT * FROM client WHERE id = %s", (customer_id,))
                 customer_exists = cursor.fetchone()
 
                 if not customer_exists:
@@ -70,9 +70,12 @@ class OrderManager:
 
                 cursor.execute("INSERT INTO orders (customer_id, order_status) VALUES (%s, %s) RETURNING order_id", (customer_id, "En cola"))
                 new_order_id = cursor.fetchone()[0]
-            db_connection.commit()
+                db_connection.commit()
 
-            return {"message": "Order added successfully", "order_id": new_order_id}
+                return {"result": {"message": "Order added successfully", "order_id": new_order_id}}
+        except HTTPException as http_error:
+            # Re-raise HTTPException to be handled by FastAPI
+            raise http_error
         except Exception as e:
             print(f"Error in add_order: {e}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -92,12 +95,12 @@ class OrderManager:
                 elif current_status["order_status"] == "En proceso":
                     new_status = "Entregado"
                 else:
-                    return {"message": "Order has already been delivered"}
+                    return {"result": {"message": "Order has already been delivered"}}
 
                 cursor.execute("UPDATE orders SET order_status = %s WHERE order_id = %s", (new_status, order_id))
             db_connection.commit()
 
-            return {"message": "Order status changed successfully"}
+            return {"result": {"message": "Order status changed successfully"}}
         except Exception as e:
             print(f"Error: {e}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -112,10 +115,10 @@ class OrderManager:
                 if not menu_item:
                     raise HTTPException(status_code=404, detail="Menu item not found")
 
-                cursor.execute("INSERT INTO order_details (order_id, item_id, quantity) VALUES (%s, %s, %s)", (order_id, item_id, quantity))
+                cursor.execute("INSERT INTO orderdetails (order_id, item_id, quantity) VALUES (%s, %s, %s)", (order_id, item_id, quantity))
             db_connection.commit()
 
-            return {"message": "Items added to order successfully"}
+            return {"result": {"message": "Items added to order successfully"}}
         except Exception as e:
             print(f"Error: {e}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
@@ -125,22 +128,25 @@ class OrderManager:
         try:
             with db_connection.cursor() as cursor:
                 cursor.execute("SELECT order_status FROM orders WHERE order_id = %s", (order_id,))
-                order_status = cursor.fetchone()
+                order_status_result = cursor.fetchone()
 
-                if not order_status:
+                if not order_status_result:
                     raise HTTPException(status_code=404, detail="Order not found")
 
-                if order_status["order_status"] not in ["En cola", "En proceso"]:
-                    raise HTTPException(status_code=400, detail="Cannot delete order in current state")
+                order_status = order_status_result[0]  # Accessing the first (and only) element in the tuple
+
+                if order_status not in ["En cola", "En proceso"]:
+                    raise HTTPException(status_code=400, detail="Cannot delete order in the current state")
 
                 cursor.execute("DELETE FROM orderdetails WHERE order_id = %s", (order_id,))
                 cursor.execute("DELETE FROM orders WHERE order_id = %s", (order_id,))
             db_connection.commit()
 
-            return {"message": "Order and details deleted successfully"}
+            return {"result": {"message": "Order and details deleted successfully"}}
         except Exception as e:
             print(f"Error: {e}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
+
 
     @staticmethod
     def remove_item_from_order(db_connection, order_id: int, detail_id: int):
@@ -149,7 +155,7 @@ class OrderManager:
                 cursor.execute("DELETE FROM orderdetails WHERE order_id = %s AND detail_id = %s", (order_id, detail_id))
             db_connection.commit()
 
-            return {"message": "Item removed from order successfully"}
+            return {"result": {"message": "Item removed from order successfully"}}
         except Exception as e:
             print(f"Error: {e}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
