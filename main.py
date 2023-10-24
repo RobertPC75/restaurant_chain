@@ -1,5 +1,6 @@
 import os
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from psycopg2 import connect, sql
 from psycopg2.extras import RealDictCursor
 from typing import List
@@ -18,8 +19,20 @@ def get_db_connection():
     conn = connect(DATABASE_URL)
     return conn
 
+# Configure CORS
+origins = [
+    "http://localhost",
+    "http://localhost:8000",  # Assuming your frontend is running on this port
+    # Add other origins as needed
+]
 
-app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/", response_class=HTMLResponse)
 def read_root():
