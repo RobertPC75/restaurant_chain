@@ -72,3 +72,18 @@ class ClientManager:
         except psycopg2.Error as e:
             print(f"Error in delete_client: {e}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
+
+    @staticmethod
+    def get_client_details(db_connection, client_id: int):
+        try:
+            with db_connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("SELECT id, name, address, phone_number FROM client WHERE id = %s", (client_id,))
+                client_details = cursor.fetchone()
+
+            if not client_details:
+                raise HTTPException(status_code=404, detail="Client not found")
+
+            return ClientItem(**client_details)
+        except psycopg2.Error as e:
+            print(f"Error in get_client_details: {e}")
+            raise HTTPException(status_code=500, detail="Internal Server Error")

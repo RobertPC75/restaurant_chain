@@ -121,3 +121,7 @@ def delete_client(client_id: int):
     with get_db_connection() as conn:
         return client_manager.delete_client(conn, client_id)
 
+@app.get("/clients/{client_id}", response_model=ClientItem)
+def get_client_by_id(client_id: int):
+    with get_db_connection() as conn:
+        return client_manager.get_client_details(conn, client_id)
