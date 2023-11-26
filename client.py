@@ -2,12 +2,14 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from fastapi import HTTPException
 from pydantic import BaseModel
+from typing import Optional
 
 class ClientItem(BaseModel):
     id: int
     name: str
-    address: str
-    phone_number: str
+    address: Optional[str] = None
+    phone_number: Optional[str] = None
+    clerkid: Optional[str] = None
 
 class DeletedClientResponse(BaseModel):
     id: int
@@ -26,32 +28,38 @@ class ClientManager:
             raise HTTPException(status_code=500, detail="Internal Server Error")
 
     @staticmethod
-    def add_client(db_connection, name: str, address: str, phone_number: str):
+    def add_client(
+        db_connection, name: str, 
+        address: Optional[str] = None, phone_number: Optional[str] = None, clerkid: Optional[str] = None
+    ):
         try:
             with db_connection.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute(
-                    "INSERT INTO client (name, address, phone_number) VALUES (%s, %s, %s) RETURNING id",
-                    (name, address, phone_number),
+                    "INSERT INTO client (name, address, phone_number, clerkid) VALUES (%s, %s, %s, %s) RETURNING id",
+                    (name, address, phone_number, clerkid),
                 )
                 new_client_id = cursor.fetchone()["id"]
             db_connection.commit()
 
-            return ClientItem(id=new_client_id, name=name, address=address, phone_number=phone_number)
+            return ClientItem(id=new_client_id, name=name, address=address, phone_number=phone_number, clerkid=clerkid)
         except psycopg2.Error as e:
             print(f"Error in add_client: {e}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
 
     @staticmethod
-    def edit_client(db_connection, client_id: int, name: str, address: str, phone_number: str):
+    def edit_client(
+        db_connection, client_id: int, name: str, 
+        address: Optional[str] = None, phone_number: Optional[str] = None, clerkid: Optional[str] = None
+    ):
         try:
             with db_connection.cursor() as cursor:
                 cursor.execute(
-                    "UPDATE client SET name = %s, address = %s, phone_number = %s WHERE id = %s",
-                    (name, address, phone_number, client_id),
+                    "UPDATE client SET name = %s, address = %s, phone_number = %s, clerkid = %s WHERE id = %s",
+                    (name, address, phone_number, clerkid, client_id),
                 )
             db_connection.commit()
 
-            return ClientItem(id=client_id, name=name, address=address, phone_number=phone_number)
+            return ClientItem(id=client_id, name=name, address=address, phone_number=phone_number, clerkid=clerkid)
         except psycopg2.Error as e:
             print(f"Error in edit_client: {e}")
             raise HTTPException(status_code=500, detail="Internal Server Error")

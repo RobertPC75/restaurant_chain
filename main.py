@@ -107,14 +107,15 @@ def get_all_clients():
         return client_manager.get_all_clients(conn)
 
 @app.post("/clients/add", response_model=ClientItem)
-def add_client(name: str, address: str, phone_number: str):
+def add_client(name: str, address: str = None, phone_number: str = None, clerkid: str = None):
     with get_db_connection() as conn:
-        return client_manager.add_client(conn, name, address, phone_number)
+        return client_manager.add_client(conn, name, address, phone_number, clerkid)
 
 @app.put("/clients/{client_id}/edit", response_model=ClientItem)
-def edit_client(client_id: int, name: str, address: str, phone_number: str):
+def edit_client(client_id: int, name: str, address: str = None, phone_number: str = None, clerkid: str = None):
     with get_db_connection() as conn:
-        return client_manager.edit_client(conn, client_id, name, address, phone_number)
+        return client_manager.edit_client(conn, client_id, name, address, phone_number, clerkid)
+
 
 @app.delete("/clients/{client_id}/delete", response_model=DeletedClientResponse)
 def delete_client(client_id: int):
