@@ -87,3 +87,18 @@ class ClientManager:
         except psycopg2.Error as e:
             print(f"Error in get_client_details: {e}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
+        
+    @staticmethod
+    def get_client_details_by_clerk_id(db_connection, clerk_id: str):
+        try:
+            with db_connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("SELECT id, name, address, phone_number FROM client WHERE clerkID = %s", (clerk_id,))
+                client_details = cursor.fetchone()
+
+            if not client_details:
+                raise HTTPException(status_code=404, detail="Client not found")
+
+            return ClientItem(**client_details)
+        except psycopg2.Error as e:
+            print(f"Error in get_client_details_by_clerk_id: {e}")
+            raise HTTPException(status_code=500, detail="Internal Server Error")

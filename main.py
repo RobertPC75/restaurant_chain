@@ -125,3 +125,9 @@ def delete_client(client_id: int):
 def get_client_by_id(client_id: int):
     with get_db_connection() as conn:
         return client_manager.get_client_details(conn, client_id)
+    
+# API route to get client details by clerkID
+@app.get("/clients/by_clerk/{clerk_id}", response_model=ClientItem)
+def get_client_by_clerk_id(clerk_id: str):
+    with get_db_connection() as conn:
+        return client_manager.get_client_details_by_clerk_id(conn, clerk_id)
