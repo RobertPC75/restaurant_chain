@@ -85,25 +85,32 @@ class OrderManager:
         try:
             with db_connection.cursor() as cursor:
                 cursor.execute("SELECT order_status FROM orders WHERE order_id = %s", (order_id,))
-                current_status = cursor.fetchone()
+                current_status_tuple = cursor.fetchone()
 
-                if not current_status:
+                if not current_status_tuple:
                     raise HTTPException(status_code=404, detail="Order not found")
 
-                if current_status["order_status"] == "En cola":
+                current_status = current_status_tuple[0]  # Access the first (and only) element in the tuple
+
+                if current_status == "En cola":
                     new_status = "En proceso"
-                elif current_status["order_status"] == "En proceso":
+                elif current_status == "En proceso":
                     new_status = "Entregado"
                 else:
                     return {"result": {"message": "Order has already been delivered"}}
 
                 cursor.execute("UPDATE orders SET order_status = %s WHERE order_id = %s", (new_status, order_id))
-            db_connection.commit()
+                db_connection.commit()
 
             return {"result": {"message": "Order status changed successfully"}}
-        except Exception as e:
-            print(f"Error: {e}")
+        except psycopg2.Error as db_error:
+            print(f"Database error in change_order_status: {db_error}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
+        except Exception as e:
+            print(f"Error in change_order_status: {e}")
+            raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
 
     @staticmethod
     def add_items_to_order(db_connection, order_id: int, item_id: int, quantity: int):
