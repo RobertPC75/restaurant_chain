@@ -137,13 +137,15 @@ class OrderManager:
                 cursor.execute("SELECT order_status FROM orders WHERE order_id = %s", (order_id,))
                 order_status_result = cursor.fetchone()
 
+                print(f"order_status_result: {order_status_result}")  # Add this line for debugging
+
                 if not order_status_result:
                     raise HTTPException(status_code=404, detail="Order not found")
 
-                order_status = order_status_result[0]  # Accessing the first (and only) element in the tuple
+                order_status = order_status_result[0] if order_status_result else None  # Access the first (and only) element in the tuple if it exists
 
                 if order_status not in ["En cola", "En proceso"]:
-                    raise HTTPException(status_code=400, detail="Cannot delete order in the current state")
+                    raise HTTPException(status_code=400, detail=f"Cannot delete order in the current state: {order_status}")
 
                 cursor.execute("DELETE FROM orderdetails WHERE order_id = %s", (order_id,))
                 cursor.execute("DELETE FROM orders WHERE order_id = %s", (order_id,))
@@ -151,7 +153,7 @@ class OrderManager:
 
             return {"result": {"message": "Order and details deleted successfully"}}
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Error in delete_order: {e}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
 
 
