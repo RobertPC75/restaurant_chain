@@ -114,9 +114,9 @@ def add_client(name: str, address: str = None, phone_number: str = None, clerkid
         return client_manager.add_client(conn, name, address, phone_number, clerkid)
 
 @app.put("/clients/{client_id}/edit", response_model=ClientItem)
-def edit_client(client_id: int, name: str, address: str = None, phone_number: str = None, clerkid: str = None):
+def edit_client(client_id: int, name: str, address: str = None, phone_number: str = None):
     with get_db_connection() as conn:
-        return client_manager.edit_client(conn, client_id, name, address, phone_number, clerkid)
+        return client_manager.edit_client(conn, client_id, name, address, phone_number)
 
 
 @app.delete("/clients/{client_id}/delete", response_model=DeletedClientResponse)
