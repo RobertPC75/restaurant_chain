@@ -9,7 +9,7 @@ class ClientItem(BaseModel):
     name: str
     address: Optional[str] = None
     phone_number: Optional[str] = None
-    clerkid: Optional[str] = None 
+    clerkid: Optional[str] = None
 
 class DeletedClientResponse(BaseModel):
     id: int
@@ -100,7 +100,7 @@ class ClientManager:
     def get_client_details_by_clerk_id(db_connection, clerk_id: str):
         try:
             with db_connection.cursor(cursor_factory=RealDictCursor) as cursor:
-                cursor.execute("SELECT id, name, address, phone_number FROM client WHERE clerkid = %s", (clerk_id,))
+                cursor.execute("SELECT id, name, address, phone_number, clerkid FROM client WHERE clerkid = %s", (clerk_id,))
                 client_details = cursor.fetchone()
 
             if not client_details:
@@ -110,3 +110,5 @@ class ClientManager:
         except psycopg2.Error as e:
             print(f"Error in get_client_details_by_clerk_id: {e}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
