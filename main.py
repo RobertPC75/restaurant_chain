@@ -134,3 +134,8 @@ def get_client_by_id(client_id: int):
 def get_client_by_clerk_id(clerk_id: str):
     with get_db_connection() as conn:
         return client_manager.get_client_details_by_clerk_id(conn, clerk_id)
+    
+@app.get("/orders/by_customer/{customer_id}", response_model=List[OrderInfo])
+def get_orders_by_customer(customer_id: int):
+    with get_db_connection() as conn:
+        return order_manager.get_orders_by_customer_id(conn, customer_id)

@@ -168,3 +168,15 @@ class OrderManager:
         except Exception as e:
             print(f"Error: {e}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
+
+    # Inside OrderManager class
+    @staticmethod
+    def get_orders_by_customer_id(db_connection, customer_id: int):
+        try:
+            with db_connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("SELECT * FROM orders WHERE customer_id = %s", (customer_id,))
+                orders = cursor.fetchall()
+            return orders
+        except Exception as e:
+            print(f"Error in get_orders_by_customer_id: {e}")
+            raise HTTPException(status_code=500, detail="Internal Server Error")
