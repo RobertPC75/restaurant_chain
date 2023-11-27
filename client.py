@@ -49,21 +49,21 @@ class ClientManager:
     @staticmethod
     def edit_client(
         db_connection, client_id: int, name: str, 
-        address: Optional[str] = None, phone_number: Optional[str] = None, clerkid: Optional[str] = None
+        address: Optional[str] = None, phone_number: Optional[str] = None
     ):
         try:
             with db_connection.cursor() as cursor:
                 cursor.execute(
-                    "UPDATE client SET name = %s, address = %s, phone_number = %s, clerkid = %s WHERE id = %s",
-                    (name, address, phone_number, clerkid, client_id),
+                    "UPDATE client SET name = %s, address = %s, phone_number = %s WHERE id = %s",
+                    (name, address, phone_number, client_id),
                 )
             db_connection.commit()
 
-            return ClientItem(id=client_id, name=name, address=address, phone_number=phone_number, clerkid=clerkid)
+            return ClientItem(id=client_id, name=name, address=address, phone_number=phone_number)
         except psycopg2.Error as e:
             print(f"Error in edit_client: {e}")
             raise HTTPException(status_code=500, detail="Internal Server Error")
-        
+
     @staticmethod
     def delete_client(db_connection, client_id: int):
         try:
